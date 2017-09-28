@@ -1,0 +1,219 @@
+
+<html>
+    <head>
+<meta charset="UTF-8">
+  <script src="moment.min.js"></script>
+  <script src="angular.min.js"></script>
+    <style>
+ul#menu li {
+    display:inline;
+}
+
+.size_image_products{
+height:90;
+ width:50;
+
+}
+</style>
+	</head>
+    <body >	
+	<div ng-app="myApp">	
+<div ng-include="'b4.html'"></div>	
+	<div  ng-controller="formCtrl2">	
+	<div class="w3-row w3-container">
+  <div class="w3-col l1 m1 s1 w3-container w3-center">
+  <p>
+  <div ng-include="'menu2.html'"></div>	
+  </p></div>
+  <div class="w3-col l3 m3 s3 w3-center">
+  <div class="w3-card-4">
+<div class="w3-container"><h2>Productos</h2></div>
+<form class="w3-container ">
+<div ng-repeat="n in headers  | filter:{show:1}">
+	{{n.header}}:<br><input class="w3-input"  type="text" ng-model="tbl[n.column]"><br>
+</div>
+</form> 
+<form action="upload.php" method="post" enctype="multipart/form-data">
+    <input  ng-model="tbl.id_image"   id="id_image" ng-model="tbl[id_image]" type="file" name="fileToUpload" id="fileToUpload">
+    <input class="w3-btn w3-border " type="submit" ng-click="get_file_name()"value="Crear" name="submit">
+	<input class="w3-btn w3-border " type="submit" ng-click="update_with_image()"value="Modifcar " name="submit">
+	</form>
+<p class="w3-organe w3-jumbo">{{tbl.id_image}}</p>
+
+<button type="button" ng-click="saveTbl2()" class="w3-btn w3-border ">Guardar</button>
+					<button type="button" ng-click="updateTbl2()" class="w3-btn w3-border" >Actualizar</button>
+					<button type="button" ng-click="ListDeleted()" class="w3-btn w3-border ">Listar Eliminados/Activos</button></p>
+</div>
+  </div>
+  <div class="w3-col l8 m8 s8  w3-center">
+  <table  class="" >
+						<thead  ><td ng-repeat="n in headers">{{n.header}}
+						<input type="text" ng-model="filters[n.column]" placeholder={{n.header}}></td></thead>
+						<tr  ng-click="select(a)" ng-repeat="a in tbls | filter:{id:filters.id} | filter:{str1:filters.str1} | filter:{str2:filters.str2} | filter:{ent1:filters.ent1} ">
+							<td ng-repeat="x in headers">
+							<div ng-if="x.column == 'ent1' || x.column == 'ent2'">{{a[x.column]  | number}}</div>
+							<div ng-if="x.column != 'ent1' && x.column != 'ent2'">{{a[x.column]}}</div>
+							</td>
+							<td><button ng-hide={{show}} ng-click="select(a)" type="button" class="btn btn-primary"> <span class="glyphicon glyphicon-ok"></span>Seleccionar</button>
+							<button ng-hide={{show}} ng-click="deleteTbl2(a)" type="button" class="btn btn-primary"> <span class="glyphicon glyphicon-remove"></span>Eliminar</button>
+							<button ng-hide={{!show}} ng-click="restore(a)" type="button" class="btn btn-primary"> <span class="glyphicon glyphicon-remove"></span>Restaurar</button></td>
+						</tr>
+					</table>
+  </div>
+</div>
+
+<div class="w3-row w3-container">
+ <div class="w3-col l1 m1 s1 w3-container"></div>
+  <div class="w3-col l3 m6 s4 w3-center w3-container">
+   <div class="w3-container "><h2>Listado de Productos con fotos</h2>
+   <div  ng-repeat="a in tbls"  class="w3-card-4 w3-bar">
+		<img class="w3-circle size_image_products" ng-src="uploads/{{a.filename}}" >
+		<p>{{a.str2}}</p> <p>{{a.ent1}}Gs</p>
+	</div>
+	</div>  									
+				</div></div>				
+	     <script >		
+		var app = angular.module('myApp', []);
+	
+		app.controller('formCtrl2', function($scope,$http) {
+		$scope.mensajes = [];
+		$scope.headers = [{show: "0",column: "id",header:"ID",size:"1"},{show: "1",column: "str1",header:"Codigo",size:"5"},
+{show: "1",column: "str2",header:"Descripción",size:"10"},{show: "1",column: "ent1",header:"Precio",size:"1",type:"number"}];
+   $scope.filters = {};
+   $scope.tbl = [];
+		$scope.tbl = {}; $scope.tbl_aux = {}; 
+   $http.get("api.php/tbl5s?order=id,desc&filter[]=del1,eq,0").then(function (response) {
+   var data = $scope.php_crud_api_transform(response.data);
+			   $scope.tbls = data.tbl5s;
+   });
+	//Save tbl1s via POST
+	$scope.saveTbl2 = function() {
+	$scope.tbl.id = null;
+	$http.post("api.php/tbl5s",$scope.tbl).then(function (response) {$scope.tbl = {}; 
+	$scope.refreshTbl2s();
+	});
+	}
+	
+	
+	//Funcion que obtiente nomber de la imagen antes de adjuntar
+	$scope.update_with_image = function() {
+	var fullPath  = document.getElementById("id_image").value;
+	var filename = fullPath.replace(/^.*[\\\/]/, '')
+	var mensaje = "Paso por aqui al tratar de adjuntar el archivo===";
+	if(filename) {$scope.tbl.filename = filename ; }
+	
+	$scope.saveTbl2();
+	}
+	
+	
+	//Funcion que obtiente nomber de la imagen antes de adjuntar
+	$scope.get_file_name = function() {
+	var fullPath  = document.getElementById("id_image").value;
+	var filename = fullPath.replace(/^.*[\\\/]/, '')
+	var mensaje = "Paso por aqui al tratar de adjuntar el archivo===";
+	if (filename) { $scope.tbl.filename = filename ; }
+	$scope.updateTbl2();
+	}
+	
+	
+	$scope.ListDeleted = function() {
+			console.log("ListDeleted de tbl2");
+			$scope.tbl1s = [];
+			console.log($scope.show);
+			if (!$scope.show) { $scope.append1 =  "eq,1";
+			$scope.show = true;}
+			else { $scope.append1 =  "eq,0";$scope.show = false;  }
+			console.log($scope.show);
+			$scope.query = "api.php/tbl5s?order=id,desc&filter[]=del1," ;
+			$scope.query = $scope.query.concat($scope.append1);
+			console.log($scope.query);
+			$http.get($scope.query).then(function (response) {
+			   var data = $scope.php_crud_api_transform(response.data);
+			   $scope.tbls = data.tbl5s;
+			});
+			}
+			
+	//Restoring data		
+	$scope.restore = function(x1) {
+	var url = "api.php/tbl5s/";url = url.concat(x1.id);
+	$scope.tbl.del1 = null;
+	$scope.tbl.id = x1.id;
+	console.log("Restoring data");
+	$http.put(url,$scope.tbl).then(function (response){$scope.tbl = {};$scope.refreshTbl2s();});
+		$scope.show = !$scope.show;
+		}	
+			
+			
+			//funcion que transforma
+	$scope.php_crud_api_transform = function(tables) {
+	var array_flip = function (trans) {
+		var key, tmp_ar = {};
+		for (key in trans) {
+			tmp_ar[trans[key]] = key;
+		}
+		return tmp_ar;
+	};
+	var get_objects = function (tables,table_name,where_index,match_value) {
+		var objects = [];
+		for (var record in tables[table_name]['records']) {
+			record = tables[table_name]['records'][record];
+			if (!where_index || record[where_index]==match_value) {
+				var object = {};
+				for (var index in tables[table_name]['columns']) {
+					var column = tables[table_name]['columns'][index];
+					object[column] = record[index];
+					for (var relation in tables) {
+						var reltable = tables[relation];
+						for (var key in reltable['relations']) {
+							var target = reltable['relations'][key];
+							if (target == table_name+'.'+column) {
+								column_indices = array_flip(reltable['columns']);
+								object[relation] = get_objects(tables,relation,column_indices[key],record[index]);
+							}
+						}
+					}
+				}
+				objects.push(object);
+			}
+		}
+		return objects;
+	};
+	tree = {};
+	for (var name in tables) {
+		var table = tables[name];
+		if (!table['relations']) {
+			tree[name] = get_objects(tables,name);
+			if (table['results']) {
+				tree['_results'] = table['results'];
+			}
+		}
+	}
+	return tree;
+}
+//fin funcion que transforma
+			
+	//Update tbl1s via PUT
+	$scope.updateTbl2 = function() {
+	var url = "api.php/tbl5s/";url = url.concat($scope.tbl.id);
+	$http.put(url,$scope.tbl).then(function (response){$scope.tbl = {};$scope.refreshTbl2s();});
+	}
+	$scope.select = function(a) {$scope.tbl = a;var data = $scope.tbl;}
+	
+	$scope.refreshTbl2s = function() {
+			 $http.get("api.php/tbl5s?order=id,desc&filter[]=del1,eq,0").then(function (response) {
+				var data = $scope.php_crud_api_transform(response.data);
+			   $scope.tbls = data.tbl5s; });
+	}
+	
+$scope.deleteTbl2 = function(x1) {
+	var url = "api.php/tbl5s/";url = url.concat(x1.id);
+	$scope.tbl.del1 = 1;
+	$scope.tbl.id = x1.id;
+	console.log("Intentando eliminado logico");
+	$http.put(url,$scope.tbl).then(function (response){$scope.tbl = {};$scope.refreshTbl2s();});	
+		}		
+});
+        </script>
+		</div>
+    </body>
+</html>
